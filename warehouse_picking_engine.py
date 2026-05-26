@@ -554,7 +554,33 @@ def build_sidebar():
         """, unsafe_allow_html=True)
         st.markdown("---")
         st.markdown("**📂 Operational Log Ingestion**")
+        
+        # Generate a sample CSV string matching your required columns exactly
+        sample_csv_payload = (
+            "Order_ID,Picker_ID,Shift,SKU_ID,Velocity,Zone,Units_Picked,Travel_Distance_m,Is_Accurate\n"
+            "ORD-08124,P01,Morning,SKU-0001,A,1,3,11.2,True\n"
+            "ORD-04211,P02,Morning,SKU-0015,A,5,2,64.8,False\n"
+            "ORD-09322,P01,Evening,SKU-0082,B,3,1,29.4,True\n"
+            "ORD-01455,P05,Night,SKU-0144,C,4,4,51.1,True\n"
+            "ORD-02231,P03,Morning,SKU-0002,A,1,5,9.1,True\n"
+            "ORD-07643,P02,Evening,SKU-0015,A,5,1,71.3,False\n"
+            "ORD-05431,P04,Morning,SKU-0095,B,2,2,18.5,True\n"
+            "ORD-03219,P01,Night,SKU-0180,C,5,3,66.0,True\n"
+            "ORD-06512,P08,Evening,SKU-0003,A,2,2,14.2,True\n"
+            "ORD-08811,P02,Morning,SKU-0022,A,4,1,44.5,False"
+        )
+        
+        # Add a direct download button above the uploader box
+        st.download_button(
+            label="📥 Download Sample CSV Template",
+            data=sample_csv_payload,
+            file_name="sample_dark_store_logs.csv",
+            mime="text/csv",
+            help="Click here to download a demo file to test the uploader below!"
+        )
+        
         uploaded = st.file_uploader("Upload Dark Store CSV logs", type=["csv"])
+        # ─────────────────────────────────────────────────────────────────────
         
         st.markdown("---")
         st.markdown("**🗂 Navigation Control Console**")
