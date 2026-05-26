@@ -214,8 +214,9 @@ def generate_pick_logs(sku_master: pd.DataFrame, n_rows: int = 5500, seed: int =
     shifts = ["Morning", "Evening", "Night"]
     shift_weights = [0.45, 0.35, 0.20]
 
-    demand_weights = sku_master["Daily_Demand"].values
-    demand_weights /= demand_weights.sum()
+    # Weighted SKU sampling by demand (busier SKUs picked more often)
+    # Using explicit out-of-place division to bypass Streamlit's read-only cache lock
+    demand_weights = sku_master["Daily_Demand"].values / sku_master["Daily_Demand"].sum()
 
     sku_sample = rng.choice(sku_master.index, n_rows, p=demand_weights)
     sampled_skus = sku_master.iloc[sku_sample].reset_index(drop=True)
