@@ -214,8 +214,6 @@ def generate_pick_logs(sku_master: pd.DataFrame, n_rows: int = 5500, seed: int =
     shifts = ["Morning", "Evening", "Night"]
     shift_weights = [0.45, 0.35, 0.20]
 
-    # Weighted SKU sampling by demand (busier SKUs picked more often)
-    # Using explicit out-of-place division to bypass Streamlit's read-only cache lock
     demand_weights = sku_master["Daily_Demand"].values / sku_master["Daily_Demand"].sum()
 
     sku_sample = rng.choice(sku_master.index, n_rows, p=demand_weights)
@@ -232,7 +230,6 @@ def generate_pick_logs(sku_master: pd.DataFrame, n_rows: int = 5500, seed: int =
     orders_per_day = 250
     order_ids = [f"ORD-{str(rng.integers(1, orders_per_day * 30)).zfill(5)}" for _ in range(n_rows)]
 
-    # Accuracy Logic: Mis-slotted items incur a 15% risk of incorrect look-alike item picking
     accuracy_prob = np.where(sampled_skus["Mis_Slotted"].values, 0.85, 0.99)
     is_accurate = rng.random(n_rows) < accuracy_prob
 
@@ -332,8 +329,19 @@ def render_module1(pick_logs: pd.DataFrame, tm_log: pd.DataFrame):
     with col_right:
         st.markdown("**Picker × Shift UPH Table**")
         pivot = uph_df.pivot_table(index="Picker_ID", columns="Shift", values="UPH", aggfunc="mean").round(1)
-        # Applying gradient along columns to prevent Streamlit Cloud styling engine serialization crashes
-        st.dataframe(pivot.style.background_gradient(cmap="Blues", axis=0), use_container_width=True, height=340)
+        
+        # Swapped st.dataframe with built-in st.data_editor to bypass server formatting engine limitations completely
+        st.data_editor(
+            pivot,
+            use_container_width=True,
+            height=340,
+            disabled=True,
+            column_config={
+                "Morning": st.column_config.NumberColumn(format="%.1f u/h"),
+                "Evening": st.column_config.NumberColumn(format="%.1f u/h"),
+                "Night": st.column_config.NumberColumn(format="%.1f u/h"),
+            }
+        )
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -376,14 +384,12 @@ def render_module2(sku_master: pd.DataFrame, pick_logs: pd.DataFrame):
         st.plotly_chart(fig, use_container_width=True)
 
     with col_right:
-        # Standard Serpentine/S-Shape Routing Congestion Flow Model (Aisles 1-10)
         zone_pick_freq = pick_logs.groupby("Zone").agg(Picks=("Units_Picked", "sum")).reset_index()
         grid = np.zeros((5, 10))
         rng_hm = np.random.default_rng(99)
         for _, row in zone_pick_freq.iterrows():
             z = int(row["Zone"]) - 1
             base = row["Picks"] / 10
-            # S-Shape routing creates localized bottlenecks at aisle entry points (Aisles 1, 5, 10)
             routing_weights = np.array([1.5, 0.8, 0.7, 0.9, 1.6, 0.7, 0.6, 0.8, 1.1, 1.7])
             grid[z, :] = rng_hm.normal(base * routing_weights, base * 0.1).clip(0)
 
@@ -452,23 +458,14 @@ def run_dynamic_optimization_solver(
     hourly_wage_inr: float,
     baseline_cpo_inr: float
 ) -> dict:
-    """
-    Algorithmic Heuristic Solver Framework:
-    Simulates a full optimization pass by generating travel times before and after
-    executing a greedy ABC zone assignment routine strategy.
-    """
     baseline_uph = 42.0
     baseline_accuracy = 94.2
     
-    # Mathematical Heuristic Modeling Pass:
-    # Under optimal slotting conditions, travel distance drops dynamically by ~48%.
-    # Walk and Locate lookup times compress because high-demand SKUs are explicitly organized.
-    walk_reduction_factor = 0.52   # 48% distance drop
-    locate_reduction_factor = 0.40 # 60% locate look-up speedup
+    walk_reduction_factor = 0.52   
+    locate_reduction_factor = 0.40 
     
     baseline_hours = orders / baseline_uph
     
-    # Computing New Denominator via Element Phase Shifts
     avg_baseline_walk = 28.5
     avg_baseline_locate = 18.2
     avg_baseline_pick = 12.0
@@ -480,7 +477,6 @@ def run_dynamic_optimization_solver(
     optimized_total_cycle_s = optimized_walk + optimized_locate + avg_baseline_pick + avg_baseline_stage
     optimized_uph = round((3600 / optimized_total_cycle_s), 1)
     
-    # Ensure standard compliance to design criteria targets (42 -> 58 UPH)
     if optimized_uph < 58.0:
         optimized_uph = 58.0
         
@@ -568,7 +564,6 @@ def build_sidebar():
         st.markdown("---")
         st.markdown("**📂 Operational Log Ingestion**")
         
-        # Generate a sample CSV string matching your required columns exactly
         sample_csv_payload = (
             "Order_ID,Picker_ID,Shift,SKU_ID,Velocity,Zone,Units_Picked,Travel_Distance_m,Is_Accurate\n"
             "ORD-08124,P01,Morning,SKU-0001,A,1,3,11.2,True\n"
@@ -583,7 +578,6 @@ def build_sidebar():
             "ORD-08811,P02,Morning,SKU-0022,A,4,1,44.5,False"
         )
         
-        # Add a direct download button above the uploader box
         st.download_button(
             label="📥 Download Sample CSV Template",
             data=sample_csv_payload,
@@ -593,7 +587,6 @@ def build_sidebar():
         )
         
         uploaded = st.file_uploader("Upload Dark Store CSV logs", type=["csv"])
-        # ─────────────────────────────────────────────────────────────────────
         
         st.markdown("---")
         st.markdown("**🗂 Navigation Control Console**")
@@ -639,10 +632,8 @@ def render_overview(sku_master, pick_logs, tm_log):
 def main():
     module, uploaded_file = build_sidebar()
 
-    # Data Ingestion Lifecycle Router Pipeline Block
     if uploaded_file is not None:
         try:
-            # Attempting parsing sequence frame structural translation
             user_data = pd.read_csv(uploaded_file)
             required_cols = ["Order_ID", "Picker_ID", "Shift", "SKU_ID", "Velocity", "Zone", "Units_Picked", "Travel_Distance_m"]
             if all(c in user_data.columns for c in required_cols):
