@@ -399,7 +399,6 @@ def render_module2(sku_master: pd.DataFrame, pick_logs: pd.DataFrame):
             plot_bgcolor="#111520",
             font=dict(family="Barlow, sans-serif", color="#a9b5ce", size=12)
         )
-        )
         st.plotly_chart(fig2, use_container_width=True)
 
 
