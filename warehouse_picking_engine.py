@@ -321,7 +321,11 @@ def render_module1(pick_logs: pd.DataFrame, tm_log: pd.DataFrame):
             color_discrete_map={"Morning": "#3b82f6", "Evening": "#f59e0b", "Night": "#a855f7"},
             labels={"UPH": "Units Per Hour", "Picker_ID": "Picker"},
         )
-        fig.update_layout(**PLOTLY_TEMPLATE["layout"])
+        fig.update_layout(
+            paper_bgcolor="rgba(0,0,0,0)",
+            plot_bgcolor="#111520",
+            font=dict(family="Barlow, sans-serif", color="#a9b5ce", size=12)
+        )
         fig.add_vline(x=overall_uph, line_dash="dash", line_color="#ef4444")
         st.plotly_chart(fig, use_container_width=True)
 
@@ -363,7 +367,11 @@ def render_module2(sku_master: pd.DataFrame, pick_logs: pd.DataFrame):
                      title="SKU Velocity Distribution Across Zones",
                      color_discrete_map={"A": "#ef4444", "B": "#f59e0b", "C": "#3b82f6"},
                      labels={"Current_Zone": "Zone", "Count": "SKU Count"})
-        fig.update_layout(**PLOTLY_TEMPLATE["layout"])
+        fig.update_layout(
+            paper_bgcolor="rgba(0,0,0,0)",
+            plot_bgcolor="#111520",
+            font=dict(family="Barlow, sans-serif", color="#a9b5ce", size=12)
+        )
         st.plotly_chart(fig, use_container_width=True)
 
     with col_right:
@@ -382,10 +390,15 @@ def render_module2(sku_master: pd.DataFrame, pick_logs: pd.DataFrame):
             z=grid, colorscale=[[0, "#0d0f14"], [0.3, "#1e3a5f"], [0.6, "#3b82f6"], [0.85, "#f59e0b"], [1.0, "#ef4444"]],
             colorbar=dict(title="Pick Freq"), xgap=2, ygap=2,
         ))
-        fig2.update_layout(title="Serpentine Routing Pick Congestion Heatmap", xxaxis_title="Warehouse Aisle →",
+        fig2.update_layout(
+            title="Serpentine Routing Pick Congestion Heatmap", 
+            xaxis_title="Warehouse Aisle →",
             yaxis_title="Zone (1=Staging, 5=Far)",
             yaxis=dict(tickvals=list(range(5)), ticktext=["Zone 1", "Zone 2", "Zone 3", "Zone 4", "Zone 5"], autorange="reversed"),
-            **PLOTLY_TEMPLATE["layout"]
+            paper_bgcolor="rgba(0,0,0,0)",
+            plot_bgcolor="#111520",
+            font=dict(family="Barlow, sans-serif", color="#a9b5ce", size=12)
+        )
         )
         st.plotly_chart(fig2, use_container_width=True)
 
