@@ -332,7 +332,8 @@ def render_module1(pick_logs: pd.DataFrame, tm_log: pd.DataFrame):
     with col_right:
         st.markdown("**Picker × Shift UPH Table**")
         pivot = uph_df.pivot_table(index="Picker_ID", columns="Shift", values="UPH", aggfunc="mean").round(1)
-        st.dataframe(pivot.style.background_gradient(cmap="Blues", axis=None), use_container_width=True, height=340)
+        # Applying gradient along columns to prevent Streamlit Cloud styling engine serialization crashes
+        st.dataframe(pivot.style.background_gradient(cmap="Blues", axis=0), use_container_width=True, height=340)
 
 
 # ─────────────────────────────────────────────────────────────────────────────
